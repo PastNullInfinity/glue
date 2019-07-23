@@ -1,5 +1,4 @@
 require 'spec_helper'
-
 require 'glue'
 require 'glue/event'
 require 'glue/tracker'

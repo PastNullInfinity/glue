@@ -28,6 +28,12 @@ class Glue::SlackReporter < Glue::BaseReporter
     false
   end
 
+  def bitbucket_linker(finding)
+    origin = finding.source
+    # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
+    "https://bitbucket.org/elevenlab/#{finding.appname}/src/master/#{origin.match(/:file=>#<Pathname:([a-zA-Z]*\.[a-zA-Z]*)>/)[0]}/src/master/#{filepath}?fileviewer=file-view-default##{filename}-#{linenumber}"
+  end
+
   def get_slack_attachment_json(finding, _tracker)
     json = {
       "fallback": 'Results of OWASP Glue test for repository' + tracker.options[:appname] + ':',
@@ -93,19 +99,28 @@ class Glue::SlackReporter < Glue::BaseReporter
     puts tracker.options[:slack_channel]
 
     begin
-      client.chat_postMessage(
-        channel: tracker.options[:slack_channel],
-        text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* . \n Here's a summary:",
-        # attachments: reports,
-        as_user: post_as_user
-      )
-      client.files_upload(
-        channels: tracker.options[:slack_channel],
-        as_user: true,
-        content: reports.join,
-        filetype: 'auto',
-        filename: 'issue_' + tracker.options[:appname]
-      )
+      if reports.length < 5
+        client.chat_postMessage(
+          channel: tracker.options[:slack_channel],
+          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* . \n Here's a summary:",
+          attachments: reports,
+          as_user: post_as_user
+        )
+      else
+        client.chat_postMessage(
+          channel: tracker.options[:slack_channel],
+          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* . \n Here's a summary:",
+          # attachments: reports,
+          as_user: post_as_user
+        )
+        client.files_upload(
+          channels: tracker.options[:slack_channel],
+          as_user: true,
+          content: reports.join,
+          filetype: 'auto',
+          filename: 'issue_' + tracker.options[:appname]
+        )
+      end
     rescue Slack::Web::Api::Error => e
       Glue.fatal 'Post to slack failed: ' << e.to_s
     rescue StandardError => e
