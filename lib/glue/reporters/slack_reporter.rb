@@ -4,6 +4,7 @@ require 'glue/finding'
 require 'glue/reporters/base_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
+require 'pry'
 # In IRB
 # require 'slack-ruby-client'
 # Slack.configure do |config|
@@ -11,6 +12,8 @@ require 'slack-ruby-client'
 # end
 # client = Slack::Web::Client.new
 # client.chat_postMessage(channel: 'channel_name', text: "message_text", attachments: json_attachment, as_user: post_as_user)
+
+PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?}.freeze
 
 class Glue::SlackReporter < Glue::BaseReporter
   Glue::Reporters.add self
@@ -28,12 +31,24 @@ class Glue::SlackReporter < Glue::BaseReporter
     false
   end
 
-  def bitbucket_linker(finding)
-    origin = finding.source
-    # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
-    "https://bitbucket.org/elevenlab/#{finding.appname}/src/master/#{origin.match(/:file=>#<Pathname:([a-zA-Z]*\.[a-zA-Z]*)>/)[0]}/src/master/#{filepath}?fileviewer=file-view-default##{filename}-#{linenumber}"
+  def get_finding_path(finding)
+    # binding.pry
+    if !finding.source[:file].to_s.match(PATHNAME_REGEX).nil?
+      matches = finding.source[:file].match(PATHNAME_REGEX)
+      matches[:file_path] + matches[:file_ext]
+    else finding.source[:file].to_s
+    end
   end
 
+  def bitbucket_linker(finding)
+    origin = finding.source
+    filepath = get_finding_path(finding)
+    filename = filepath.split('/')[-1]
+    linenumber = finding.source[:line]
+    # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
+    "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
+  end
+# https://bitbucket.org/PastNullInfinity/python-app-security-test/src/eecc7a8752bf041ac764ccc584390a50ac254654/app.py#lines-10
   def get_slack_attachment_json(finding, _tracker)
     json = {
       "fallback": 'Results of OWASP Glue test for repository' + tracker.options[:appname] + ':',
@@ -45,11 +60,11 @@ class Glue::SlackReporter < Glue::BaseReporter
   end
 
   def get_slack_attachment_text(finding, _tracker)
-    text = 'Origin: ' + finding.source.to_s + "\n" \
-           'Vulnerability: ' + finding.description.to_s + "\n" \
-           'Description: ' + finding.detail.to_s + "\n" \
-           'Severity:' + slack_priority(finding.severity).to_s + " \n" \
-           'Detail: ' + "\n" + finding.detail.to_s << "\n"
+    text =
+      'Link: ' + bitbucket_linker(finding) + "\n" \
+      'Vulnerability: ' + finding.description.to_s + "\n" \
+      'Severity:' + slack_priority(finding.severity).to_s + " \n" \
+      'Detail: ' + "\n" + finding.detail.to_s << "\n"
   end
 
   def slack_priority(severity)
@@ -85,15 +100,18 @@ class Glue::SlackReporter < Glue::BaseReporter
 
     client = Slack::Web::Client.new
 
-    begin
-      client.auth_test
-    rescue Slack::Web::Api::Error => e
-      Glue.fatal 'Slack authentication failed: ' << e.to_s
-    end
+    # begin
+    #   client.auth_test
+    # rescue Slack::Web::Api::Error => e
+    #   Glue.fatal 'Slack authentication failed: ' << e.to_s
+    # end
 
     reports = []
     tracker.findings.each do |finding|
-      reports << get_slack_attachment_text(finding, tracker)
+      if findings.length < 5
+        reports << get_slack_attachment_text(finding, tracker)
+      else
+        reports << get_slack_attachment_json(finding,tracker)
     end
 
     puts tracker.options[:slack_channel]
@@ -102,14 +120,14 @@ class Glue::SlackReporter < Glue::BaseReporter
       if reports.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* . \n Here's a summary:",
+          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
           attachments: reports,
           as_user: post_as_user
         )
       else
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* . \n Here's a summary:",
+          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
           # attachments: reports,
           as_user: post_as_user
         )
