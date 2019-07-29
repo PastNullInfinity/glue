@@ -4,7 +4,6 @@ require 'glue/finding'
 require 'glue/reporters/base_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
-require 'pry'
 # In IRB
 # require 'slack-ruby-client'
 # Slack.configure do |config|
@@ -48,7 +47,7 @@ class Glue::SlackReporter < Glue::BaseReporter
     # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
     "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
   end
-# https://bitbucket.org/PastNullInfinity/python-app-security-test/src/eecc7a8752bf041ac764ccc584390a50ac254654/app.py#lines-10
+
   def get_slack_attachment_json(finding, _tracker)
     json = {
       "fallback": 'Results of OWASP Glue test for repository' + tracker.options[:appname] + ':',
@@ -112,6 +111,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         reports << get_slack_attachment_text(finding, tracker)
       else
         reports << get_slack_attachment_json(finding,tracker)
+      end
     end
 
     puts tracker.options[:slack_channel]
