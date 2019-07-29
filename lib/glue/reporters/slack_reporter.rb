@@ -106,11 +106,13 @@ class Glue::SlackReporter < Glue::BaseReporter
     # end
 
     reports = []
-    tracker.findings.each do |finding|
-      if findings.length < 5
+    if tracker.findings.length < 5
+      tracker.findings.each do |finding|
+        reports << get_slack_attachment_json(finding, tracker)
+      end
+    else
+      tracker.findings.each do |finding|
         reports << get_slack_attachment_text(finding, tracker)
-      else
-        reports << get_slack_attachment_json(finding,tracker)
       end
     end
 
