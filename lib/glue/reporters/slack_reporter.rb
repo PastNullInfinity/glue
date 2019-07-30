@@ -2,6 +2,7 @@
 
 require 'glue/finding'
 require 'glue/reporters/base_reporter'
+require 'glue/reporters/pdf_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
 # In IRB
@@ -40,9 +41,7 @@ class Glue::SlackReporter < Glue::BaseReporter
   end
 
   def bitbucket_linker(finding)
-    origin = finding.source
     filepath = get_finding_path(finding)
-    filename = filepath.split('/')[-1]
     linenumber = finding.source[:line]
     # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
     "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
@@ -99,11 +98,11 @@ class Glue::SlackReporter < Glue::BaseReporter
 
     client = Slack::Web::Client.new
 
-    # begin
-    #   client.auth_test
-    # rescue Slack::Web::Api::Error => e
-    #   Glue.fatal 'Slack authentication failed: ' << e.to_s
-    # end
+    begin
+      client.auth_test
+    rescue Slack::Web::Api::Error => e
+      Glue.fatal 'Slack authentication failed: ' << e.to_s
+    end
 
     reports = []
     if tracker.findings.length < 5
@@ -130,7 +129,6 @@ class Glue::SlackReporter < Glue::BaseReporter
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
           text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
-          # attachments: reports,
           as_user: post_as_user
         )
         client.files_upload(
