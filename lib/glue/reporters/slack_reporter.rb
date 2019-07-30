@@ -1,8 +1,5 @@
-# frozen_string_literal: true
-
 require 'glue/finding'
 require 'glue/reporters/base_reporter'
-require 'glue/reporters/pdf_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
 # In IRB
