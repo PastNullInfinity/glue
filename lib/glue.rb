@@ -2,6 +2,7 @@ require 'rubygems'
 require 'yaml'
 require 'set'
 require 'tempfile'
+require 'pry'
 
 module Glue
 
@@ -168,6 +169,8 @@ module Glue
       [:to_teamcity]
     when :slack
       [:to_slack]
+    when :html
+      [:to_html]
     else
       [:to_s]
     end
