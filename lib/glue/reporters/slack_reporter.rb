@@ -1,7 +1,9 @@
+require 'faraday'
 require 'glue/finding'
 require 'glue/reporters/base_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
+require 'glue/util'
 # In IRB
 # require 'slack-ruby-client'
 # Slack.configure do |config|
@@ -14,18 +16,14 @@ PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.
 
 class Glue::SlackReporter < Glue::BaseReporter
   Glue::Reporters.add self
+  include Glue::Util
 
   attr_accessor :name, :format
 
   def initialize
     @name = 'SlackReporter'
     @format = :to_slack
-  end
-
-  def number?(str)
-    true if Float(str)
-  rescue StandardError
-    false
+    @currentpath = __dir__
   end
 
   def get_finding_path(finding)
@@ -45,6 +43,7 @@ class Glue::SlackReporter < Glue::BaseReporter
   end
 
   def get_slack_attachment_json(finding, _tracker)
+    Glue.notify '**** Generating report data'
     json = {
       "fallback": 'Results of OWASP Glue test for repository' + tracker.options[:appname] + ':',
       "color": slack_priority(finding.severity),
@@ -54,28 +53,20 @@ class Glue::SlackReporter < Glue::BaseReporter
     }
   end
 
+  # def get_slack_attachment_html(_tracker)
+  #   Glue.notify '**** Running base HTML report'
+  #   reports = []
+  #   template = ERB.new File.read("#{@currentpath}/html_template.erb")
+  #   reports << template.result(binding)
+  # end
+
   def get_slack_attachment_text(finding, _tracker)
+    Glue.notify '**** Generating text attachment'
     text =
       'Link: ' + bitbucket_linker(finding) + "\n" \
       'Vulnerability: ' + finding.description.to_s + "\n" \
       'Severity:' + slack_priority(finding.severity).to_s + " \n" \
       'Detail: ' + "\n" + finding.detail.to_s << "\n"
-  end
-
-  def slack_priority(severity)
-    if number?(severity)
-      f = Float(severity)
-      if f == 3
-        'good'
-      elsif f == 2
-        'warning'
-      elsif f == 1
-        'danger'
-      else
-        Glue.notify "**** Unknown severity type #{severity}"
-        severity
-      end
-    end
   end
 
   def run_report(tracker)
@@ -107,18 +98,30 @@ class Glue::SlackReporter < Glue::BaseReporter
         reports << get_slack_attachment_json(finding, tracker)
       end
     else
-      tracker.findings.each do |finding|
-        reports << get_slack_attachment_text(finding, tracker)
-      end
+      Glue.notify '**** Running base HTML report'
+      reports = []
+      report_filename = "report_#{tracker.options[:appname]}"
+
+      template = ERB.new File.read("#{@currentpath}/html_template.erb")
+      Glue.notify '**** Rendering HTML'
+      reports << template.result(binding) # ZOZZISSIMO TODO Da sistemare il binding
+
+      File.open("#{report_filename}.html", 'w+') { |f| f.write (reports.join("\n") ) }
+      # binding.pry
+      Glue.notify '**** Rendering PDF'
+
+      `wkhtmltopdf --encoding utf-8 #{report_filename}.html #{report_filename}.pdf` # runs command to render to PDF
     end
 
     puts tracker.options[:slack_channel]
 
     begin
-      if reports.length < 5
+      Glue.notify '**** Uploading message to Slack'
+      # binding.pry
+      if tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
+          text: 'OWASP Glue has found ' + tracker.findings.length + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
           attachments: reports,
           as_user: post_as_user
         )
@@ -131,9 +134,9 @@ class Glue::SlackReporter < Glue::BaseReporter
         client.files_upload(
           channels: tracker.options[:slack_channel],
           as_user: true,
-          content: reports.join,
-          filetype: 'auto',
-          filename: 'issue_' + tracker.options[:appname]
+          file: Faraday::UploadIO.new("#{report_filename}.pdf","pdf"),
+          filetype: 'pdf',
+          filename: 'report_' + tracker.options[:appname]
         )
       end
     rescue Slack::Web::Api::Error => e

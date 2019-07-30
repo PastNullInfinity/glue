@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Glue Security report for <%=tracker.options[:appname]%> </title>
+  </head>
+  <body>
+    <h1> Glue Security report for <%=tracker.options[:appname] %></h1>
+    <a href="https://bitbucket.com/<%=ENV['BITBUCKET_REPO_FULL_NAME']%>/commits/<%=ENV['BITBUCKET_COMMIT']%>">Link to repo</a>
+    <p>Glue has found <%= tracker.findings.length.to_s %> vulnerabilities in <%=tracker.options[:appname]%> : <%= ENV['BITBUCKET_COMMIT']%> .  Here's a summary:</p>
+    <% tracker.findings.each do |finding| %>
+      <div>
+        <a href="<%= bitbucket_linker(finding).to_s %>" > Link to vulnerability </a>
+        <h3> Vulnerability:  <%= finding.description %> </h3>
+        <h3> Severity: <%= slack_priority(finding.severity).to_s  %> </h3>
+        <h3> Fingerprint: `<%= finding.fingerprint %>` </h3>
+        <h3> Detail: </h3>
+        <span>
+          <%= finding.detail %>
+        </span>
+      </div>
+    <% end %>
+  </body>
+</html>
