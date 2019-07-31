@@ -7,7 +7,7 @@ module Glue::Util
 
   def runsystem(report, *splat)
     Open3.popen3(*splat) do |stdin, stdout, stderr, wait_thr|
-      
+
       # start a thread consuming the stdout buffer
       # if the pipes fill up a deadlock occurs
       stdout_consumed = ""
@@ -16,7 +16,7 @@ module Glue::Util
           stdout_consumed += line
         end
       }
-      
+
       if $logfile and report
         while line = stderr.gets do
           $logfile.puts line
@@ -51,15 +51,15 @@ module Glue::Util
 
   def get_finding_path(finding)
     pathname_regex = Regexp.new(/(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?/i)
-    unless ENV['BITBUCKET_REPO_FULL_NAME'].nil?
-      if !finding.source[:file].to_s.match(pathname_regex).nil?
+    # unless !ENV['BITBUCKET_REPO_FULL_NAME'].nil?
+      unless finding.source[:file].to_s.match(pathname_regex).nil?
         matches = finding.source[:file].match(pathname_regex)
         matches[:file_path] + matches[:file_ext]
       else finding.source[:file].to_s
       end
-    else
-      ENV['BITBUCKET_REPO_FULL_NAME']
-    end
+    # else
+    #   ENV['BITBUCKET_REPO_FULL_NAME']
+    # end
   end
 
   def bitbucket_linker(finding)
@@ -68,7 +68,7 @@ module Glue::Util
     unless ENV['BITBUCKET_REPO_FULL_NAME'].nil?
       "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
     else 
-      "https://bitbucket.org"
+      ""
     end
   end
 
