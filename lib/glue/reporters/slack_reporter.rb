@@ -13,7 +13,7 @@ require 'glue/util'
 # client = Slack::Web::Client.new
 # client.chat_postMessage(channel: 'channel_name', text: "message_text", attachments: json_attachment, as_user: post_as_user)
 
-PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?}.freeze
+PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?}
 
 class Glue::SlackReporter < Glue::BaseReporter
   Glue::Reporters.add self
