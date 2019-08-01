@@ -1,5 +1,7 @@
 
 require 'spec_helper'
+
+require 'spec_helper'
 require 'glue'
 require 'glue/event'
 require 'glue/tracker'
@@ -38,11 +40,12 @@ describe Glue::SlackReporter do
       subject.run_report(@tracker)
 
       # Check slack client made request to send message with attachment for findings
-      WebMock.should have_requested(:post, 'https://slack.com/api/chat.postMessage')
+      WebMock.should (have_requested(:post, 'https://slack.com/api/chat.postMessage')
         .with { |req|
                        req.body.include?('attachments=%0A%09Description%3A+finding_description')
-                       req.body.include?('text=OWASP+Glue+test+run+completed+-+See+attachment.')
-                     }
+                       req.body.include?('text=OWASP+Glue+has+found+1+vulnerabilities')
+                     })
+      
     end
   end
 end

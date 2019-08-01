@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'faraday'
 require 'glue/finding'
 require 'glue/reporters/base_reporter'
@@ -26,23 +28,7 @@ class Glue::SlackReporter < Glue::BaseReporter
     @currentpath = __dir__
   end
 
-  def get_finding_path(finding)
-    # binding.pry
-    if !finding.source[:file].to_s.match(PATHNAME_REGEX).nil?
-      matches = finding.source[:file].match(PATHNAME_REGEX)
-      matches[:file_path] + matches[:file_ext]
-    else finding.source[:file].to_s
-    end
-  end
-
-  def bitbucket_linker(finding)
-    filepath = get_finding_path(finding)
-    linenumber = finding.source[:line]
-    # TODO: find a way to know the branch in which the source lives, maybe passing it as a variable through pipeline?
-    "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
-  end
-
-  def get_slack_attachment_json(finding, _tracker)
+  def get_slack_attachment_json(finding, tracker)
     Glue.notify '**** Generating report data'
     json = {
       "fallback": 'Results of OWASP Glue test for repository' + tracker.options[:appname] + ':',
@@ -52,13 +38,6 @@ class Glue::SlackReporter < Glue::BaseReporter
       "text": finding.detail.to_s
     }
   end
-
-  # def get_slack_attachment_html(_tracker)
-  #   Glue.notify '**** Running base HTML report'
-  #   reports = []
-  #   template = ERB.new File.read("#{@currentpath}/html_template.erb")
-  #   reports << template.result(binding)
-  # end
 
   def get_slack_attachment_text(finding, _tracker)
     Glue.notify '**** Generating text attachment'
@@ -70,8 +49,7 @@ class Glue::SlackReporter < Glue::BaseReporter
   end
 
   def run_report(tracker)
-    post_as_user = false
-    post_as_user = true if tracker.options[:slack_post_as_user]
+    post_as_user = false unless tracker.options[:slack_post_as_user]
 
     mandatory = %i[slack_token slack_channel]
     missing = mandatory.select { |param| tracker.options[param].nil? }
@@ -106,35 +84,38 @@ class Glue::SlackReporter < Glue::BaseReporter
       Glue.notify '**** Rendering HTML'
       reports << template.result(binding) # ZOZZISSIMO TODO Da sistemare il binding
 
-      File.open("#{report_filename}.html", 'w+') { |f| f.write (reports.join("\n") ) }
-      # binding.pry
-      Glue.notify '**** Rendering PDF'
+      File.open("#{report_filename}.html", 'w+') { |f| f.write reports.join("\n") }
 
-      `wkhtmltopdf --encoding utf-8 #{report_filename}.html #{report_filename}.pdf` # runs command to render to PDF
+      # runs command to render to PDF
+      Glue.notify '**** Rendering PDF'
+      `wkhtmltopdf --encoding utf-8 #{report_filename}.html #{report_filename}.pdf`
     end
 
     puts tracker.options[:slack_channel]
 
     begin
       Glue.notify '**** Uploading message to Slack'
-      # binding.pry
+
       if tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + tracker.findings.length + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
+          text: 'OWASP Glue has found ' + tracker.findings.length.to_s +
+                'vulnerabilities in *' + tracker.options[:appname] + '* :' + ENV['BITBUCKET_COMMIT'] + ".\n" \
+                "Here's a summary: \n Link to repo:" + 
+                'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME'] + '/commits/' + ENV['BITBUCKET_COMMIT'],
           attachments: reports,
           as_user: post_as_user
         )
       else
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + reports.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
+          text: 'OWASP Glue has found ' + tracker.findings.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
           as_user: post_as_user
         )
         client.files_upload(
           channels: tracker.options[:slack_channel],
           as_user: true,
-          file: Faraday::UploadIO.new("#{report_filename}.pdf","pdf"),
+          file: Faraday::UploadIO.new("#{report_filename}.pdf", 'pdf'),
           filetype: 'pdf',
           filename: 'report_' + tracker.options[:appname]
         )

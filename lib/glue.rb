@@ -169,8 +169,10 @@ module Glue
       [:to_teamcity]
     when :slack
       [:to_slack]
-    when :html
+    when :html, :to_html
       [:to_html]
+    when :pdf, :to_pdf
+      [:to_pdf]
     else
       [:to_s]
     end
