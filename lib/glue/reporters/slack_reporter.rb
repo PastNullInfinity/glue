@@ -117,7 +117,7 @@ class Glue::SlackReporter < Glue::BaseReporter
           as_user: true,
           file: Faraday::UploadIO.new("#{report_filename}.pdf", 'pdf'),
           filetype: 'pdf',
-          filename: 'report_' + tracker.options[:appname]
+          filename: "#{tracker.options[:appname]}.pdf"
         )
       end
     rescue Slack::Web::Api::Error => e
