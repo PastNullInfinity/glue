@@ -13,7 +13,7 @@
     color: #9b4dca;
   }
 
-  .vulnerability{
+  .vulnerability {
     border-style: solid;
     border-width: 1px;
     border-color: #aaa;
@@ -21,45 +21,59 @@
     margin: 10px;
     padding: 10px;
   }
-  .vulnerability pre code{
+
+  .vulnerability pre code {
     font-size: 10pt;
   }
+
 </style>
 
 <body class="container">
   <div class="row">
     <div class="column">
       <h1 style="text-align:center"> Glue Security report for <%=tracker.options[:appname] %></h1>
-      <h3 style="text-align:center">Glue has found <%= tracker.findings.length.to_s %> vulnerabilities in <%=tracker.options[:appname]%> : <a
+      <h3 style="text-align:center">Glue has found <%= tracker.findings.length.to_s %> vulnerabilities in
+        <%=tracker.options[:appname]%> : <a
           href="https://bitbucket.com/<%=ENV['BITBUCKET_REPO_FULL_NAME']%>/commits/<%=ENV['BITBUCKET_COMMIT']%>"><%= ENV['BITBUCKET_COMMIT']%></a>.<br>
         Here's a summary:</h3>
       <% tracker.findings.each do |finding| %>
       <div class="vulnerability">
         <table>
-          <thead>
+
             <tr>
-              <th><a class="button button-outline"  href="<%= bitbucket_linker(finding).to_s %>">Vulnerability:</a></th>
-              <th>Severity:</th>
-              <th>Fingerprint</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
+              <th>Vulnerability:</th>
               <td>
-                <%= finding.description %>
+              <% if @task == "RetireJS"%>
+              <a href="<%= finding.detail %>"><%= finding.description %></a>
+              <%else%>
+              <%= finding.description %>
+              <%end%>
               </td>
+            </tr>
+            <tr>
+              <th>Severity:</th>
               <td>
                 <%= slack_priority(finding.severity).to_s%>
               </td>
+            </tr>
+            <tr>
+              <th>Fingerprint</th>
               <td>
                 <%= finding.fingerprint %>
               </td>
+              </tr>
+          <tbody>
+
             </tr>
           </tbody>
         </table>
         <div class="row">
-          <div class="column"><h3><a href="https://bitbucket.org"> Detail: </a></h3></div>
-          <div class="column"><h3><a href="<%= bitbucket_linker(finding).to_s %>">File Path: /test/file.py</a></h3></div>
+          <div class="column">
+            <h3> Detail:</h3><p><%=finding.detail.split("\n")[0]%></p>
+          </div>
+          <div class="column">
+            <h3>File Path:</h3><a href="<%= bitbucket_linker(finding).to_s %>"> <%=  get_finding_path(finding).to_s %></a>
+          </div>
         </div>
         <pre><code>
             <%= finding.detail %>
