@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+
 
 require 'glue/finding'
 require 'glue/reporters/html_reporter'

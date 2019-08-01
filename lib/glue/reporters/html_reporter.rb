@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 
 require 'glue/finding'
 require 'glue/reporters/base_reporter'
