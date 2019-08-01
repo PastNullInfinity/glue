@@ -94,11 +94,11 @@ class Glue::SlackReporter < Glue::BaseReporter
 
     begin
       Glue.notify '**** Uploading message to Slack'
-
+      issue_number = tracker.findings.length
       if tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + tracker.findings.length.to_s +
+          text: 'OWASP Glue has found ' + issue_number.to_s +
                 'vulnerabilities in *' + tracker.options[:appname] + '* :' + ENV['BITBUCKET_COMMIT'] + ".\n" \
                 "Here's a summary: \n Link to repo:" + 
                 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME'] + '/commits/' + ENV['BITBUCKET_COMMIT'],
@@ -106,9 +106,10 @@ class Glue::SlackReporter < Glue::BaseReporter
           as_user: post_as_user
         )
       else
+        Glue.notify '**** Uploading message and attachment to Slack'
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + tracker.findings.length.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
+          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
           as_user: post_as_user
         )
         client.files_upload(
