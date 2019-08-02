@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="lib/glue/reporters/milligram.min.css">
+  <title>Glue Security report for <%=tracker.options[:appname]%> </title>
+</head>
+<style>
+  .milligram {
+    color: #9b4dca;
+  }
+
+  .vulnerability {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #aaa;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
+  }
+
+  .vulnerability pre code {
+    font-size: 10pt;
+  }
+
+</style>
+
+<body class="container">
+  <div class="row">
+    <div class="column">
+      <h1 style="text-align:center"> Glue Security report for <%=tracker.options[:appname] %></h1>
+      <h3 style="text-align:center">Glue has found <%= tracker.findings.length.to_s %> vulnerabilities in
+        <%=tracker.options[:appname]%> : <a
+          href="https://bitbucket.com/<%=ENV['BITBUCKET_REPO_FULL_NAME']%>/commits/<%=ENV['BITBUCKET_COMMIT']%>"><%= ENV['BITBUCKET_COMMIT']%></a>.<br>
+        Here's a summary:</h3>
+      <% tracker.findings.each do |finding| %>
+      <div class="vulnerability">
+        <table>
+
+            <tr>
+              <th>Vulnerability:</th>
+              <td>
+              <% if @task == "RetireJS"%>
+              <a href="<%= finding.detail %>"><%= finding.description %></a>
+              <%else%>
+              <%= finding.description %>
+              <%end%>
+              </td>
+            </tr>
+            <tr>
+              <th>Severity:</th>
+              <td>
+                <%= slack_priority(finding.severity).to_s%>
+              </td>
+            </tr>
+            <tr>
+              <th>Fingerprint</th>
+              <td>
+                <%= finding.fingerprint %>
+              </td>
+              </tr>
+          <tbody>
+
+            </tr>
+          </tbody>
+        </table>
+        <div class="row">
+          <div class="column">
+            <h3> Detail:</h3><p><%=finding.detail.split("\n")[0]%></p>
+          </div>>
+        </div>
+        <pre><code>
+            <%= finding.detail %>
+      </code></pre>
+      </div>
+      <% end %>
+    </div>
+  </div>
+</body>
+
+</html>

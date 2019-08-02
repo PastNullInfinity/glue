@@ -49,6 +49,16 @@ module Glue::Util
     false
   end
 
+  def is_task?(task_name)
+   true if tracker.options[:labels].include? task_name
+    else false
+  end
+
+  def is_label?(label_name)
+    true if tracker.options[:run_tasks].include? label_name
+    else false
+  end
+
   def get_finding_path(finding)
     pathname_regex = Regexp.new(/(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?/i)
     # unless !ENV['BITBUCKET_REPO_FULL_NAME'].nil?

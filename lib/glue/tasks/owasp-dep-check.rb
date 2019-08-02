@@ -73,7 +73,11 @@ class Glue::DepCheckListener
 
       # Convert CVSS score to 1-3 scale
       divisor = 10.0 / 3    # 10.0 is the CVSS max score
-      @cvss = (@cvss.to_f / divisor).ceil
+      unless @cvss.to_f == 0
+        @cvss = (@cvss.to_f / divisor).ceil
+      else
+        @cvss = 1
+      end
 
       puts "Fingerprint: #{@fingerprint}"
       puts "Vuln: #{@name} CVSS: #{@cvss} Description #{description} Detail #{detail}"
@@ -115,7 +119,7 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
     elsif @gradle_project
       run_args = [ "./gradlew", "dependencyCheckAnalyze" ]
     elsif @maven_project
-      run_args = [ "mvn", "org.owasp:dependency-check-maven:check" ]
+      run_args = [ "mvn", "org.owasp:dependency-check-maven:aggregate", "-Dformats=XML" ]
     else  
       run_args = [ @dep_check_path, "--project", "Glue", "-f", "ALL" ]
     end
@@ -145,8 +149,8 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
       report_directory[:report_path] + "/dependency-check-report.xml"
     elsif @gradle_project
       @trigger.path + "/build/reports/dependency-check-report.xml"
-   # elsif @maven_project
-   #  @trigger.path + "/target/dependency-check-report.xml"
+    elsif @maven_project
+      @trigger.path + "/target/dependency-check-report.xml"
     else
       @trigger.path + "/dependency-check-report.xml"
     end
