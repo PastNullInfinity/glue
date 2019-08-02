@@ -25,6 +25,11 @@ class Glue::SlackReporter < Glue::BaseReporter
     @name = 'SlackReporter'
     @format = :to_slack
     @currentpath = __dir__
+    # OWASP Dependency Check specific settings
+    @sbt_path = @tracker.options[:sbt_path]
+    @scala_project = @tracker.options[:scala_project]
+    @gradle_project = @tracker.options[:gradle_project]
+    @maven_project = @tracker.options[:maven_project]
   end
 
   def get_slack_attachment_json(finding, tracker)
@@ -119,9 +124,27 @@ class Glue::SlackReporter < Glue::BaseReporter
           filetype: 'pdf',
           filename: "#{tracker.options[:appname]}.pdf"
         )
-        if @tracker[:labels].include? 'java' or @tracker[:tasks].include? 'owaspdependencycheck'
-          
-        end
+        # if @tracker[:labels].include? 'java' or @tracker[:tasks].include? 'owaspdependencycheck'
+        #   path = if @scala_project
+        #     #md = @result.match(/\e\[0m\[\e\[0minfo\e\[0m\] \e\[0mWriting reports to (?<report_path>.*)\e\[0m/)
+        #     #md[:report_path] + "/dependency-check-report.xml"
+        #     report_directory = @sbt_settings.match(/.*dependencyCheckOutputDirectory: (?<report_path>.*)\e\[0m/)
+        #     report_directory[:report_path] + "/dependency-check-report.xml"
+        #   elsif @gradle_project
+        #     @trigger.path + "/build/reports/dependency-check-report.xml"
+        #   elsif @maven_project
+        #     @trigger.path + "target/dependency-check-report.xml"
+        #   else
+        #     @trigger.path + "/dependency-check-report.xml"
+        #   end
+        #   client.files_upload(
+        #     channels: tracker.options[:slack_channel],
+        #     as_user: true,
+        #     file: Faraday::UploadIO.new("#{report_filename}.pdf", 'pdf'),
+        #     filetype: 'pdf',
+        #     filename: "dep_check_#{tracker.options[:appname]}.pdf"
+        #   )
+        # end
       end
     rescue Slack::Web::Api::Error => e
       Glue.fatal 'Post to slack failed: ' << e.to_s
