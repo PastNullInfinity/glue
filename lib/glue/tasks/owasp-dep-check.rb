@@ -146,7 +146,7 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
     elsif @gradle_project
       @trigger.path + "/build/reports/dependency-check-report.xml"
     elsif @maven_project
-      @trigger.path + "/target/dependency-check-report.xml"
+      @trigger.path + "target/dependency-check-report.xml"
     else
       @trigger.path + "/dependency-check-report.xml"
     end

@@ -7,7 +7,7 @@ class Glue::Trufflehog < Glue::BaseTask
   Glue::Tasks.add self
   include Glue::Util
 
-  ISSUE_SEVERITY = 4
+  ISSUE_SEVERITY = 3
 
   def initialize(trigger, tracker)
     super(trigger, tracker)
