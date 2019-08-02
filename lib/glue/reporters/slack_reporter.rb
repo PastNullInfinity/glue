@@ -119,6 +119,9 @@ class Glue::SlackReporter < Glue::BaseReporter
           filetype: 'pdf',
           filename: "#{tracker.options[:appname]}.pdf"
         )
+        if @tracker[:labels].include? 'java' or @tracker[:tasks].include? 'owaspdependencycheck'
+          
+        end
       end
     rescue Slack::Web::Api::Error => e
       Glue.fatal 'Post to slack failed: ' << e.to_s
