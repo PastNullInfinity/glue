@@ -119,7 +119,8 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
     elsif @gradle_project
       run_args = [ "./gradlew", "dependencyCheckAnalyze" ]
     elsif @maven_project
-      run_args = [ "mvn","--settings=settings.xml", "org.owasp:dependency-check-maven:check", "-Dformats=XML" ]
+      run_args_check = [ "mvn","--settings=settings.xml", "org.owasp:dependency-check-maven:check", "-Dformats=XML" ]
+      run_args_aggregate = [ "mvn","--settings=settings.xml", "org.owasp:dependency-check-maven:aggregate", "-Dformats=XML" ]
     else  
       run_args = [ @dep_check_path, "--project", "Glue", "-f", "ALL" ]
     end
@@ -136,7 +137,14 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
 
     initial_dir = Dir.pwd
     Dir.chdir @trigger.path if @scala_project || @gradle_project || @maven_project
-    @result= runsystem(true, *run_args.flatten)
+    if @maven_project
+      Glue.notify "**** Running checks..."
+      @result= runsystem(true, *run_args_check.flatten)
+      Glue.notify "**** DONE.\n**** Aggregating findings..."
+      @result= runsystem(true, *run_args_aggregate.flatten)
+    else
+      @result= runsystem(true, *run_args_check.flatten)
+    end
     @sbt_settings = runsystem(true, @sbt_path, "dependencyCheckListSettings") if @scala_project
     Dir.chdir initial_dir if @scala_project || @gradle_project || @maven_project
   end
