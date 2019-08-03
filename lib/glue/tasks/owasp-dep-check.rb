@@ -119,7 +119,7 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
     elsif @gradle_project
       run_args = [ "./gradlew", "dependencyCheckAnalyze" ]
     elsif @maven_project
-      run_args = [ "mvn", "org.owasp:dependency-check-maven:aggregate", "-Dformats=XML" ]
+      run_args = [ "mvn","--settings=settings.xml", "org.owasp:dependency-check-maven:check", "-Dformats=XML" ]
     else  
       run_args = [ @dep_check_path, "--project", "Glue", "-f", "ALL" ]
     end
