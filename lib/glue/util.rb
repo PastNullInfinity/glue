@@ -49,14 +49,20 @@ module Glue::Util
     false
   end
 
-  def is_task?(task_name,tracker)
-   true if tracker.options[:labels].include? task_name
-    else false
+  def is_task?(task_name, tracker)
+    true if tracker.options[:run_tasks].include? task_name
+  rescue Exception::NoMethodError
+    false
+  else
+    false
   end
 
-  def is_label?(label_name,tracker)
-    true if tracker.options[:run_tasks].include? label_name
-    else false
+  def is_label?(label_name, tracker)
+    true if tracker.options[:labels].include? label_name
+  rescue Exception::NoMethodError
+    false
+  else
+    false
   end
 
   def get_finding_path(finding)
