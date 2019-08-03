@@ -50,18 +50,22 @@ module Glue::Util
   end
 
   def is_task?(task_name, tracker)
-    true if tracker.options[:run_tasks].include? task_name
+    if tracker.options[:run_tasks].include? task_name
+      true
+    else
+      false
+    end
   rescue Exception::NoMethodError
-    false
-  else
     false
   end
 
   def is_label?(label_name, tracker)
-    true if tracker.options[:labels].include? label_name
+    if tracker.options[:lables].include? label_name
+      true
+    else
+      false
+    end
   rescue Exception::NoMethodError
-    false
-  else
     false
   end
 
