@@ -140,7 +140,7 @@ class Glue::OWASPDependencyCheck < Glue::BaseTask
     if @maven_project
       Glue.notify "**** Running checks..."
       @result= runsystem(true, *run_args_check.flatten)
-      Glue.notify "**** DONE.\n**** Aggregating findings..."
+      Glue.notify "**** DONE\n**** Aggregating findings..."
       @result= runsystem(true, *run_args_aggregate.flatten)
     else
       @result= runsystem(true, *run_args_check.flatten)
