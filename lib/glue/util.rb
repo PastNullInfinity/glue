@@ -49,12 +49,12 @@ module Glue::Util
     false
   end
 
-  def is_task?(task_name)
+  def is_task?(task_name,tracker)
    true if tracker.options[:labels].include? task_name
     else false
   end
 
-  def is_label?(label_name)
+  def is_label?(label_name,tracker)
     true if tracker.options[:run_tasks].include? label_name
     else false
   end
