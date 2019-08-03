@@ -60,7 +60,7 @@ module Glue::Util
   end
 
   def is_label?(label_name, tracker)
-    if tracker.options[:lables].include? label_name
+    if tracker.options[:labels].include? label_name
       true
     else
       false
