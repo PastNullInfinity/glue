@@ -26,10 +26,12 @@ class Glue::SlackReporter < Glue::BaseReporter
     @format = :to_slack
     @currentpath = __dir__
     # OWASP Dependency Check specific settings
-    @sbt_path = @tracker.options[:sbt_path]
-    @scala_project = @tracker.options[:scala_project]
-    @gradle_project = @tracker.options[:gradle_project]
-    @maven_project = @tracker.options[:maven_project]
+    if is_label?('java',@tracker) || is_task?('owaspdependencycheck',@tracker)
+      @sbt_path = @tracker.options[:sbt_path]
+      @scala_project = @tracker.options[:scala_project]
+      @gradle_project = @tracker.options[:gradle_project]
+      @maven_project = @tracker.options[:maven_project]
+    end
   end
 
   def get_slack_attachment_json(finding, tracker)
