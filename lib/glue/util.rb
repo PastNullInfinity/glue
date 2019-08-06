@@ -87,8 +87,8 @@ module Glue::Util
     linenumber = finding.source[:line]
     unless ENV['BITBUCKET_REPO_FULL_NAME'].nil?
       "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
-    else 
-      ""
+    else # we are probably inside Jenkins
+      "#{ENV['GIT_URL'].chomp('.git')}/src/#{ENV['GIT_COMMIT']}/#{filepath}#lines-#{linenumber}"      
     end
   end
 

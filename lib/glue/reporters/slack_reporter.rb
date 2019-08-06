@@ -76,6 +76,21 @@ class Glue::SlackReporter < Glue::BaseReporter
       Glue.fatal 'Slack authentication failed: ' << e.to_s
     end
 
+    begin
+      if ENV['BITBUCKET_COMMIT'].nil? #If nil, we're probably inside a Jenkins build
+        Glue.warn "***** No Bitbucket variables found, is this a Jenkins build?"
+        commit = ENV['GIT_COMMIT']
+        branch = ENV['GIT_BRANCH'].chomp("origin/")
+        url = ENV['GIT_URL'].chomp(".git")
+      elsif ENV['GIT_COMMIT'].nil?
+        commit = ENV['BITBUCKET_COMMIT']
+        branch = ENV['BITBUCKET_BRANCH']
+        url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
+      else
+        Glue.warn "***** No Git enviroment variables found, the report will be generated with broken links"
+      end
+    end
+
     reports = []
     if tracker.findings.length < 5
       tracker.findings.each do |finding|
@@ -100,15 +115,15 @@ class Glue::SlackReporter < Glue::BaseReporter
     puts tracker.options[:slack_channel]
 
     begin
+
       Glue.notify '**** Uploading message to Slack'
       issue_number = tracker.findings.length
       if tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + issue_number.to_s +
-                'vulnerabilities in *' + tracker.options[:appname] + '* :' + ENV['BITBUCKET_COMMIT'] + ".\n" \
-                "Here's a summary: \n Link to repo:" + 
-                'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME'] + '/commits/' + ENV['BITBUCKET_COMMIT'],
+          text: 'OWASP Glue has found ' + issue_number.to_s + \
+                'vulnerabilities in *' + tracker.options[:appname] + '* :' + commit + ".\n" \
+                "Here's a summary: \n Link to repo: #{url}/commits/#{commit}",
           attachments: reports,
           as_user: post_as_user
         )
@@ -116,7 +131,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         Glue.notify '**** Uploading message and attachment to Slack'
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{ENV['BITBUCKET_COMMIT']} . \n Here's a summary: \n Link to repo: https://bitbucket.com/#{ENV['BITBUCKET_REPO_FULL_NAME']}/commits/#{ENV['BITBUCKET_COMMIT']}",
+          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{commit} . \n Here's a summary: \n Link to repo: #{url}/commits/#{commit}",
           as_user: post_as_user
         )
         client.files_upload(

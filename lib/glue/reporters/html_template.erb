@@ -34,7 +34,7 @@
       <h1 style="text-align:center"> Glue Security report for <%=tracker.options[:appname] %></h1>
       <h3 style="text-align:center">Glue has found <%= tracker.findings.length.to_s %> vulnerabilities in
         <%=tracker.options[:appname]%> : <a
-          href="https://bitbucket.com/<%=ENV['BITBUCKET_REPO_FULL_NAME']%>/commits/<%=ENV['BITBUCKET_COMMIT']%>"><%= ENV['BITBUCKET_COMMIT']%></a>.<br>
+          href="<%=url%> + '/commits/' + <%=commit%>"><%= commit%></a>.<br>
         Here's a summary:</h3>
       <% tracker.findings.each do |finding| %>
       <div class="vulnerability">
