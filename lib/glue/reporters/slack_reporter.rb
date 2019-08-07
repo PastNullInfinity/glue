@@ -77,14 +77,14 @@ class Glue::SlackReporter < Glue::BaseReporter
     end
 
     begin
-      if !ENV['GIT_COMMIT'].nil? #If nil, we're probably inside a Jenkins build
+      if ENV['BITBUCKET_COMMIT'].nil? #If nil, we're probably inside a Jenkins build
         Glue.warn "***** No Bitbucket variables found, is this a Jenkins build?"
         commit = ENV['GIT_COMMIT']
         Glue.warn commit
         branch = ENV['GIT_BRANCH'].chomp("origin/")
         Glue.warn branch
         url = ENV['GIT_URL'].chomp(".git")
-      elsif !ENV['BITBUCKET_COMMIT'].nil?
+      elsif ENV['GIT_COMMIT'].nil?
         commit = ENV['BITBUCKET_COMMIT']
         branch = ENV['BITBUCKET_BRANCH']
         url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
