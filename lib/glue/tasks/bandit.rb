@@ -17,12 +17,17 @@ class Glue::Bandit < Glue::BaseTask
   end
 
   def run
-    exclude_path = @tracker.options[:bandit_exclude].to_a.join(',').squeeze(',') || "" 
-    # binding.pry
-    exclude = "-x " + exclude_path unless exclude_path.empty?
-    Glue.debug "**** Bandit will not analyze #{exclude_path}"
-    rootpath = @trigger.path
-    @result=runsystem(true, "bandit",exclude, "-f", "json", "-r", "#{rootpath}")
+    unless @tracker.options[:bandit_exclude].nil?
+      exclude_path = @tracker.options[:bandit_exclude].to_a.join(',').squeeze(',') || "" 
+      binding.pry
+      exclude = "-x " + exclude_path
+      Glue.debug "**** Bandit will not analyze #{exclude_path}"
+      rootpath = @trigger.path
+      @result=runsystem(true, "bandit",exclude, "-f", "json", "-r", "#{rootpath}")
+    else
+      rootpath = @trigger.path
+      @result=runsystem(true, "bandit", "-f", "json", "-r", "#{rootpath}")
+    end
   end
 
   def analyze
