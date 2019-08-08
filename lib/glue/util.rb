@@ -7,6 +7,7 @@ module Glue::Util
 
   def runsystem(report, *splat)
     Open3.popen3(*splat) do |stdin, stdout, stderr, wait_thr|
+    Glue.debug "**** CLI: #{splat.join(' ').chomp}"
 
       # start a thread consuming the stdout buffer
       # if the pipes fill up a deadlock occurs
@@ -16,13 +17,13 @@ module Glue::Util
           stdout_consumed += line
         end
       }
-
+      
       if $logfile and report
         while line = stderr.gets do
           $logfile.puts line
         end
       end
-
+      
       consumer_thread.join
       return stdout_consumed.chomp
       #return stdout.read.chomp
@@ -88,7 +89,7 @@ module Glue::Util
     unless ENV['BITBUCKET_REPO_FULL_NAME'].nil?
       "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
     else # we are probably inside Jenkins
-      "#{ENV['GIT_URL'].gsub("git@","").gsub(":","/").insert(0,"https://")}/src/#{ENV['GIT_COMMIT']}/#{filepath}#lines-#{linenumber}"      
+      "#{ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")}/src/#{ENV['GIT_COMMIT']}/#{filepath}#lines-#{linenumber}"      
     end
   end
 
