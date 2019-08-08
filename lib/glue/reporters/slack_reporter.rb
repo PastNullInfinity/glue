@@ -83,7 +83,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         Glue.warn commit
         branch = ENV['GIT_BRANCH'].chomp("origin/")
         Glue.warn branch
-        url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").insert(0,"https://")
+        url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")
       elsif ENV['GIT_COMMIT'].nil?
         commit = ENV['BITBUCKET_COMMIT']
         branch = ENV['BITBUCKET_BRANCH']
