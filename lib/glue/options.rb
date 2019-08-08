@@ -97,6 +97,12 @@ module Glue::Options
             options[:exclude_dirs] << path
           end
         end
+        opts.on "--bandit-exclude path1,path2,path3,etc", Array, "A list of paths to ignore when running Bandit" do |paths|
+          paths.each do |path|
+            options[:bandit_exclude] ||= Set.new
+            options[:bandit_exclude] << path
+          end
+        end
 
         opts.separator ""
         opts.separator "Output options:"
