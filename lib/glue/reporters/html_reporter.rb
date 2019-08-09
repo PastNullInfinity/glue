@@ -18,7 +18,7 @@ class Glue::HTMLReporter < Glue::BaseReporter
   def run_report(tracker)
     Glue.notify 'Running base HTML report...'
     reports = []
-    if is_task?('owaspdependencycheck',tracker) || is_label?('java',tracker)
+    if task?('owaspdependencycheck',tracker) || label?('java',tracker)
       template = ERB.new File.read("#{@currentpath}/html_template_depcheck.erb")
     else
       template = ERB.new File.read("#{@currentpath}/html_template.erb")
@@ -29,7 +29,7 @@ class Glue::HTMLReporter < Glue::BaseReporter
   def to_html(tracker)
     Glue.notify 'Running base HTML report...'
     reports = []
-    if is_task?('owaspdependencycheck',tracker) || is_label?('java',tracker)
+    if task?('owaspdependencycheck',tracker) || label?('java',tracker)
       template = ERB.new File.read("#{@currentpath}/html_template_depcheck.erb")
     else
       template = ERB.new File.read("#{@currentpath}/html_template.erb")

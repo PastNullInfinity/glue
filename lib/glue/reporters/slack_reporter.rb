@@ -26,7 +26,7 @@ class Glue::SlackReporter < Glue::BaseReporter
     @format = :to_slack
     @currentpath = __dir__
     # OWASP Dependency Check specific settings
-    if is_label?('java',@tracker) || is_task?('owaspdependencycheck',@tracker)
+    if label?('java',@tracker) || task?('owaspdependencycheck',@tracker)
       @sbt_path = @tracker.options[:sbt_path]
       @scala_project = @tracker.options[:scala_project]
       @gradle_project = @tracker.options[:gradle_project]
@@ -48,7 +48,7 @@ class Glue::SlackReporter < Glue::BaseReporter
   def get_slack_attachment_text(finding, _tracker)
     Glue.notify '**** Generating text attachment'
     text =
-      'Link: ' + bitbucket_linker(finding) + "\n" \
+      'Link: ' + repository_linker(finding) + "\n" \
       'Vulnerability: ' + finding.description.to_s + "\n" \
       'Severity:' + slack_priority(finding.severity).to_s + " \n" \
       'Detail: ' + "\n" + finding.detail.to_s << "\n"
@@ -76,21 +76,21 @@ class Glue::SlackReporter < Glue::BaseReporter
       Glue.fatal 'Slack authentication failed: ' << e.to_s
     end
 
-    begin
-      if ENV['BITBUCKET_COMMIT'].nil? #If nil, we're probably inside a Jenkins build
-        Glue.warn "***** No Bitbucket variables found, is this a Jenkins build?"
-        commit = ENV['GIT_COMMIT']
-        Glue.warn commit
-        branch = ENV['GIT_BRANCH'].chomp("origin/")
-        Glue.warn branch
-        url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")
-      elsif ENV['GIT_COMMIT'].nil?
-        commit = ENV['BITBUCKET_COMMIT']
-        branch = ENV['BITBUCKET_BRANCH']
-        url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
-      else
-        Glue.warn "***** No Git enviroment variables found, the report will be generated with broken links"
-      end
+    case which_env?
+    when 'bitbucket'
+      Glue.notify "**** Bitbucket env detected"
+      commit = ENV['BITBUCKET_COMMIT']
+      branch = ENV['BITBUCKET_BRANCH']
+      url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
+    when 'jenkins'
+      Glue.notify "**** Jenkins env detected"
+      commit = ENV['GIT_COMMIT']
+      Glue.warn commit
+      branch = ENV['GIT_BRANCH'].chomp("origin/")
+      Glue.warn branch
+      url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")
+    when nil
+      Glue.warn "***** No Git enviroment variables found, the report will be generated with broken links"
     end
 
     reports = []
@@ -98,7 +98,7 @@ class Glue::SlackReporter < Glue::BaseReporter
       tracker.findings.each do |finding|
         reports << get_slack_attachment_json(finding, tracker)
       end
-    elsif tracker.findings.length ==0
+    elsif tracker.findings.length == 0
       Glue.notify '**** No issues found, skipping report generation...'
     else
       Glue.notify '**** Running base HTML report'
@@ -119,8 +119,8 @@ class Glue::SlackReporter < Glue::BaseReporter
     puts tracker.options[:slack_channel]
 
     begin
-
       Glue.notify '**** Uploading message to Slack'
+      binding.pry
       issue_number = tracker.findings.length
       if tracker.findings.length.empty?
         client.chat_postMessage(
