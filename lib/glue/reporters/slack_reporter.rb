@@ -123,10 +123,12 @@ class Glue::SlackReporter < Glue::BaseReporter
       Glue.notify '**** Uploading message to Slack'
       issue_number = tracker.findings.length
       if tracker.findings.length.empty?
+        Glue.notify '**** No issues found, skipping send report.'
+      elsif tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
           text: 'OWASP Glue has found ' + issue_number.to_s + \
-                'vulnerabilities in *' + tracker.options[:appname] + '* :' + commit + ".\n" \
+                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + commit + ".\n" \
                 "Here's a summary: \n Link to repo: #{url}/commits/#{commit}",
           attachments: reports,
           as_user: post_as_user
