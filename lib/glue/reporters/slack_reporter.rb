@@ -122,7 +122,7 @@ class Glue::SlackReporter < Glue::BaseReporter
 
       Glue.notify '**** Uploading message to Slack'
       issue_number = tracker.findings.length
-      if tracker.findings.length.empty?
+      if tracker.findings.length == 0
         Glue.notify '**** No issues found, skipping send report.'
       elsif tracker.findings.length < 5
         client.chat_postMessage(
