@@ -19,7 +19,7 @@ class Glue::Bandit < Glue::BaseTask
   def run
     unless @tracker.options[:bandit_exclude].nil?
       exclude_path = @tracker.options[:bandit_exclude].to_a.join(',').squeeze(',') || "" 
-      binding.pry
+      # binding.pry
       exclude = "-x " + exclude_path
       Glue.debug "**** Bandit will not analyze #{exclude_path}"
       rootpath = @trigger.path
