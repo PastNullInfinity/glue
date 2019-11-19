@@ -93,6 +93,34 @@ module Glue::Util
     end
   end
 
+  def bitbucket_pr_linker(pr_number,project_name)
+    # The link should be something like:  https://bitbucket.org/<project_name>/<repo_name>/pull-requests/<pr_number>/
+  end
+
+  def get_git_environment()
+    git_env = {}
+    if ENV['BITBUCKET_COMMIT'].nil? # If nil, we're probably inside a Jenkins build
+      Glue.warn "***** No Bitbucket variables found, is this a Jenkins build?"
+      git_env.commit = ENV['GIT_COMMIT']
+      Glue.warn commit
+      git_env.branch = ENV['GIT_BRANCH'].chomp("origin/")
+      Glue.warn branch
+      if branch.include? "PR"
+        Glue.warn "***** This build comes from a Bitbucket Pull Request, the link will point to that."
+        git_env.url = bitbucket_pr_linker(git_env.branch.chomp("PR-"),ENV['JOB_NAME'])
+      else
+        git_env.url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")
+      end
+    elsif ENV['GIT_COMMIT'].nil?
+      git_env.commit = ENV['BITBUCKET_COMMIT']
+      git_env.branch = ENV['BITBUCKET_BRANCH']
+      git_env.url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
+    else
+      Glue.warn "***** No Git enviroment variables found, the report will be generated with broken links"
+    end
+    return git_env
+  end
+
   def slack_priority(severity)
     if number?(severity)
       f = Float(severity)
