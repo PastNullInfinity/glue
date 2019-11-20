@@ -149,6 +149,8 @@ GEM
       gli
       hashie
       websocket-driver
+    stub_env (1.0.4)
+      rspec (>= 2.0, < 4.0)
     terminal-table (1.8.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
     thor (0.20.3)
@@ -181,6 +183,7 @@ DEPENDENCIES
   rspec_junit_formatter
   simplecov
   slack-ruby-client
+  stub_env
   webmock
 
 BUNDLED WITH
