@@ -111,8 +111,8 @@ class Glue::SlackReporter < Glue::BaseReporter
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
           text: 'OWASP Glue has found ' + issue_number.to_s + \
-                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + @git_env.commit + ".\n" \
-                "Here's a summary: \n Link to repo: #{@git_env.url}/commits/#{@git_env.commit}",
+                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + @git_env[:commit] + ".\n" \
+                "Here's a summary: \n Link to repo: #{@git_env[:url]}/commits/#{@git_env[:commit]}",
           attachments: reports,
           as_user: post_as_user
         )
@@ -120,7 +120,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         Glue.notify '**** Uploading message and attachment to Slack'
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{@git_env.commit} . \n Here's a summary: \n Link to repo: #{@git_env.url}/commits/#{@git_env.commit}",
+          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{@git_env[:commit]} . \n Here's a summary: \n Link to repo: #{@git_env[:url]}/commits/#{@git_env[:commit]}",
           as_user: post_as_user
         )
         client.files_upload(
