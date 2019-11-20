@@ -5,6 +5,7 @@ gemspec :name => "owasp-glue"
 gem 'aruba', '~> 0.14.2', :group => :test
 gem 'faraday'
 gem 'httparty'
+gem 'stub_env', groups: [:development, :test]
 gem 'rake', :group => :test
 gem 'rspec', :group => :test
 gem 'rspec-collection_matchers', :group => :test
