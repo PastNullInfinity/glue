@@ -37,6 +37,8 @@ class Glue::Reporters
           end
         rescue => e
           Glue.error e.message
+          puts "Error during processing: #{$!}"
+          puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
           tracker.error e
         end
       end
