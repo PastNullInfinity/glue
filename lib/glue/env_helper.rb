@@ -6,10 +6,10 @@ module Glue::EnvHelper
   include Glue::Util
   def get_finding_path(finding)
     pathname_regex = Regexp.new(%r{(\./|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?}i)
-    if finding.source[:file].to_s.match(pathname_regex).nil? finding.source[:file].to_s
-    else
+    unless finding.source[:file].to_s.match(pathname_regex).nil?
       matches = finding.source[:file].match(pathname_regex)
       matches[:file_path] + matches[:file_ext]
+    else finding.source[:file].to_s
     end
   end
 
