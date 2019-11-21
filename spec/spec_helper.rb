@@ -15,6 +15,8 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require 'simplecov'
 require 'webmock/rspec'
+require 'spec_helper'
+require 'stub_env'
 
 SimpleCov.start do
   add_filter %r{^/spec/}
@@ -30,6 +32,32 @@ RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
+
+  # Enables stub environment variables
+  config.include StubEnv::Helpers
+  # Suppresses stdout while testing, and outputs the results to a file
+  original_stderr = $stderr
+  original_stdout = $stdout
+  config.before(:all) do 
+    # Redirect stderr and stdout
+    $stderr = File.new(File.join(File.dirname(__FILE__), 'output', 'log.txt'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), 'output', 'log.txt'), 'w')
+  end
+  config.after(:all) do 
+    $stderr = original_stderr
+    $stdout = original_stdout
+  end
+  # for tests that include the Slack API, stub the calls to it
+  config.before(:each, slack_mock: true) do
+    # Stub out requests to Slack API
+    # Test auth
+    stub_request(:post, 'https://slack.com/api/auth.test')
+    .to_return(status: 200, body: '', headers: {})
+    # Send message
+    stub_request(:post, 'https://slack.com/api/chat.postMessage')
+    .to_return(status: 200, body: '', headers: {})
+    
+  end
   config.expect_with :rspec do |expectations|
     # This option will default to `true` in RSpec 4. It makes the `description`
     # and `failure_message` of custom matchers include text for helper methods

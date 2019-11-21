@@ -5,6 +5,7 @@ require 'glue/reporters/base_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
 require 'glue/util'
+require 'glue/env_helper'
 # In IRB
 # require 'slack-ruby-client'
 # Slack.configure do |config|
@@ -18,6 +19,7 @@ PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.
 class Glue::SlackReporter < Glue::BaseReporter
   Glue::Reporters.add self
   include Glue::Util
+  include Glue::EnvHelper
 
   attr_accessor :name, :format
 
@@ -25,8 +27,9 @@ class Glue::SlackReporter < Glue::BaseReporter
     @name = 'SlackReporter'
     @format = :to_slack
     @currentpath = __dir__
+    @git_env = get_git_environment
     # OWASP Dependency Check specific settings
-    if is_label?('java',@tracker) || is_task?('owaspdependencycheck',@tracker)
+    if is_label?('java', @tracker) || is_task?('owaspdependencycheck', @tracker)
       @sbt_path = @tracker.options[:sbt_path]
       @scala_project = @tracker.options[:scala_project]
       @gradle_project = @tracker.options[:gradle_project]
@@ -76,29 +79,12 @@ class Glue::SlackReporter < Glue::BaseReporter
       Glue.fatal 'Slack authentication failed: ' << e.to_s
     end
 
-    begin
-      if ENV['BITBUCKET_COMMIT'].nil? #If nil, we're probably inside a Jenkins build
-        Glue.warn "***** No Bitbucket variables found, is this a Jenkins build?"
-        commit = ENV['GIT_COMMIT']
-        Glue.warn commit
-        branch = ENV['GIT_BRANCH'].chomp("origin/")
-        Glue.warn branch
-        url = ENV['GIT_URL'].gsub("git@","").gsub(":","/").gsub(".git","").insert(0,"https://")
-      elsif ENV['GIT_COMMIT'].nil?
-        commit = ENV['BITBUCKET_COMMIT']
-        branch = ENV['BITBUCKET_BRANCH']
-        url = 'https://bitbucket.com/' + ENV['BITBUCKET_REPO_FULL_NAME']
-      else
-        Glue.warn "***** No Git enviroment variables found, the report will be generated with broken links"
-      end
-    end
-
     reports = []
     if tracker.findings.length < 5
       tracker.findings.each do |finding|
         reports << get_slack_attachment_json(finding, tracker)
       end
-    elsif tracker.findings.length ==0
+    elsif tracker.findings.length.zero?
       Glue.notify '**** No issues found, skipping report generation...'
     else
       Glue.notify '**** Running base HTML report'
@@ -119,17 +105,16 @@ class Glue::SlackReporter < Glue::BaseReporter
     puts tracker.options[:slack_channel]
 
     begin
-
       Glue.notify '**** Uploading message to Slack'
       issue_number = tracker.findings.length
-      if tracker.findings.length == 0
+      if tracker.findings.length.zero?
         Glue.notify '**** No issues found, skipping send report.'
       elsif tracker.findings.length < 5
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
           text: 'OWASP Glue has found ' + issue_number.to_s + \
-                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + commit + ".\n" \
-                "Here's a summary: \n Link to repo: #{url}/commits/#{commit}",
+                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + @git_env[:commit] + ".\n" \
+                "Here's a summary: \n Link to repo: #{@git_env[:url]}/commits/#{@git_env[:commit]}",
           attachments: reports,
           as_user: post_as_user
         )
@@ -137,7 +122,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         Glue.notify '**** Uploading message and attachment to Slack'
         client.chat_postMessage(
           channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{commit} . \n Here's a summary: \n Link to repo: #{url}/commits/#{commit}",
+          text: 'OWASP Glue has found ' + issue_number.to_s + ' vulnerabilities in *' + tracker.options[:appname] + "* : #{@git_env[:commit]} . \n Here's a summary: \n Link to repo: #{@git_env[:url]}/commits/#{@git_env[:commit]}",
           as_user: post_as_user
         )
         client.files_upload(
@@ -170,7 +155,7 @@ class Glue::SlackReporter < Glue::BaseReporter
         # end
       end
     rescue Slack::Web::Api::Error => e
-      Glue.fatal 'Post to slack failed: ' << e.to_s
+      Glue.fatal '***** Post to slack failed: ' << e.to_s
     rescue StandardError => e
       Glue.fatal '***** Unknown error: ' << e.to_s
     end
