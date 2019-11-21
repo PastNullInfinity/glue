@@ -5,6 +5,7 @@ require 'glue/reporters/base_reporter'
 require 'jira-ruby'
 require 'slack-ruby-client'
 require 'glue/util'
+require 'glue/env_helper'
 # In IRB
 # require 'slack-ruby-client'
 # Slack.configure do |config|
@@ -18,6 +19,7 @@ PATHNAME_REGEX = %r{(\.\/|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.
 class Glue::SlackReporter < Glue::BaseReporter
   Glue::Reporters.add self
   include Glue::Util
+  env_helper =  Glue::EnvHelper.new
 
   attr_accessor :name, :format
 
@@ -25,9 +27,9 @@ class Glue::SlackReporter < Glue::BaseReporter
     @name = 'SlackReporter'
     @format = :to_slack
     @currentpath = __dir__
-    @git_env = get_git_environment()
+    @git_env = env_helper.get_git_environment
     # OWASP Dependency Check specific settings
-    if is_label?('java',@tracker) || is_task?('owaspdependencycheck',@tracker)
+    if is_label?('java', @tracker) || is_task?('owaspdependencycheck', @tracker)
       @sbt_path = @tracker.options[:sbt_path]
       @scala_project = @tracker.options[:scala_project]
       @gradle_project = @tracker.options[:gradle_project]
@@ -49,7 +51,7 @@ class Glue::SlackReporter < Glue::BaseReporter
   def get_slack_attachment_text(finding, _tracker)
     Glue.notify '**** Generating text attachment'
     text =
-      'Link: ' + bitbucket_linker(finding) + "\n" \
+      'Link: ' + env_helper.bitbucket_linker(finding) + "\n" \
       'Vulnerability: ' + finding.description.to_s + "\n" \
       'Severity:' + slack_priority(finding.severity).to_s + " \n" \
       'Detail: ' + "\n" + finding.detail.to_s << "\n"

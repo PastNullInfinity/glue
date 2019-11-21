@@ -3,43 +3,45 @@ require 'glue/event'
 require 'glue/tracker'
 require 'glue/finding'
 require 'glue/util'
-include Glue::Util
 
-describe '.get_git_environment' do
-  # after(:each) do
-  #   # Flushes the ENV after each test
-  #   ENV = {}
-  # end
-  it 'Should populate values from Jenkins build environment' do
-    stub_env('GIT_COMMIT', 'testJenkinsCommit')
-    stub_env('GIT_BRANCH', 'origin/master')
-    stub_env('GIT_URL', 'git@bitbucket.org:testfolder/testrepo.git')
-    stub_env('JOB_NAME', 'job_folder/PR-1/master')
-
-    expect(get_git_environment).to include(
-      branch: 'master',
-      commit: 'testJenkinsCommit',
-      url: 'https://bitbucket.org/testfolder/testrepo'
-    )
+describe '.slack_priority' do
+  include Glue::Util
+  it 'Should return a string' do
+    expect(slack_priority(1)).to be_a_kind_of(String)
   end
-  it 'Should populate values from Bitbucket build enviroment' do
-    stub_env('BITBUCKET_COMMIT', 'testBitbucketCommit')
-    stub_env('BITBUCKET_BRANCH', 'origin/master')
-    stub_env('BITBUCKET_REPO_FULL_NAME', 'project_name/repo_name/src/branch_name/')
-    stub_env('BITBUCKET_TAG', '1.0')
-    stub_env('BITBUCKET_BUILD_NUMBER', '1')
-
-    expect(get_git_environment).to include(
-      branch: 'master',
-      commit: 'testBitbucketCommit',
-      url: 'https://bitbucket.org/project_name/repo_name/src/branch_name/'
-    )
+  it 'Should return a string if the severity is a string' do
+    expect(slack_priority('1')).to be_a_kind_of(String)
   end
-  it 'Should return empty strings if it fails to retreive the build environment' do
-    expect(get_git_environment). to include(
-      branch: '',
-      commit: '',
-      url: ''
-    )
+  it 'Should return danger on 1' do
+    expect(slack_priority).to receive(1).and to_return('danger')
+  end
+  it 'Should return warning on 2' do
+    expect(slack_priority).to receive(2).and to_return('warning')
+  end
+  it 'Should return good on 3' do
+    expect(slack_priority.to receive(3).and to_return('good')
+  end
+  it 'Should return an empty string on unknown severity' do
+    expect(slack_priority(12)).to eq('')
+  end
+end
+
+describe '.number?' do
+  include Glue::Util
+  it 'Should return true if input is a type of Number' do
+    expect(number?(1)).to eq(true)
+  end
+  it 'Should return false otherwise' do
+    expect(number?('asdf')).to eq(false)
+  end
+  it 'Should return false if an exception occurs' do
+    expect(number?('asdf')).to receive(StandardError) && eq(false)
+  end
+end
+
+describe '.fingerprint' do
+  include Glue::Util
+  it 'Should return different hashes for different inputs' do
+    expect(fingerprint('I heard that bubblegum is coming back in style')).not_to eq(fingerprint('I am your father'))
   end
 end

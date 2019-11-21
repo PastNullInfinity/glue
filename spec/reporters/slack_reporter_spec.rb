@@ -1,5 +1,3 @@
-require 'spec_helper'
-require 'dotenv'
 require 'glue'
 require 'glue/event'
 require 'glue/tracker'
@@ -7,11 +5,6 @@ require 'glue/finding'
 require 'glue/reporters'
 require 'glue/reporters/slack_reporter'
 
-def load_env(path)
-env_vars_path = 'spec/reporters/env_variables/'
- # Stubs ENV with generic GIT variables
- Dotenv.load("#{env_vars_path}.#{path}.env")
-end
 describe Glue::SlackReporter do
   before :each do
     @tracker = Glue::Tracker.new(
@@ -30,7 +23,10 @@ describe Glue::SlackReporter do
 
   describe '.Slack Reporter', slack_mock: true do
     it 'Should report findings as a slack message with an attachment' do
-      load_env('slack_reporter_Jenkins')
+      stub_env('GIT_COMMIT', 'testJenkinsCommit')
+      stub_env('GIT_BRANCH', 'origin/master')
+      stub_env('GIT_URL', 'git@bitbucket.org:testfolder/testrepo.git')
+      stub_env('JOB_NAME', 'job_folder/PR-1/master')
       @slack = Glue::SlackReporter.new
       @slack.run_report(@tracker)
       # Check slack client made request to send message with attachment for findings
@@ -40,5 +36,16 @@ describe Glue::SlackReporter do
                             req.body.include?('text=OWASP+Glue+has+found+1+vulnerabilities')
                           end)
     end
+    # it 'Should skip report generation if there are no issues', slack_mock: true do
+    #   stub_env('GIT_COMMIT', 'testJenkinsCommit')
+    #   stub_env('GIT_BRANCH', 'origin/master')
+    #   stub_env('GIT_URL', 'git@bitbucket.org:testfolder/testrepo.git')
+    #   stub_env('JOB_NAME', 'job_folder/PR-1/master')
+    #   @slack = Glue::SlackReporter.new
+    #   @tracker.report Glue::Finding.new('finding_appname',
+    #                                     'finding_task')
+      
+    #   expect(@slack.run_report).to receive(tracker).with(@tracker).to eq('**** No issues found, skipping send report.')
+    # end
   end
 end

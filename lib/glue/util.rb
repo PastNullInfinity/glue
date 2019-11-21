@@ -69,75 +69,17 @@ module Glue::Util
     false
   end
 
-  def get_finding_path(finding)
-    pathname_regex = Regexp.new(%r{(\./|#<Pathname:)(?<file_path>.*)(?<file_ext>\.py|\.java|\.class|\.js|\.ts|.xml)(>)?}i)
-    # unless !ENV['BITBUCKET_REPO_FULL_NAME'].nil?
-    if finding.source[:file].to_s.match(pathname_regex).nil? finding.source[:file].to_s
-    else
-      matches = finding.source[:file].match(pathname_regex)
-      matches[:file_path] + matches[:file_ext]
-    end
-    # else
-    #   ENV['BITBUCKET_REPO_FULL_NAME']
-    # end
-  end
-
-  def bitbucket_linker(finding)
-    filepath = get_finding_path(finding)
-    linenumber = finding.source[:line]
-    if ENV['BITBUCKET_REPO_FULL_NAME'].nil? # we are probably inside Jenkins
-      "#{ENV['GIT_URL'].gsub('git@', '').gsub(':', '/').gsub('.git', '').insert(0, 'https://')}/src/#{ENV['GIT_COMMIT']}/#{filepath}#lines-#{linenumber}"
-    else
-      "https://bitbucket.org/#{ENV['BITBUCKET_REPO_FULL_NAME']}/src/#{ENV['BITBUCKET_COMMIT']}/#{filepath}#lines-#{linenumber}"
-    end
-  end
-
-  def bitbucket_pr_linker(pr_number, project_name)
-    # The link should be something like:
-    # https://bitbucket.org/<project_name>/<repo_name>/pull-requests/<pr_number>/
-  end
-
-  def get_git_environment
-    git_env = {}
-    if ENV['GIT_COMMIT'].nil? && ENV['BITBUCKET_COMMIT'].nil?
-      Glue.warn '***** No Git enviroment variables found, the report will be generated with broken links'
-      git_env[:commit] = git_env[:branch] = git_env[:url] = ''
-    end
-    unless ENV['GIT_COMMIT'].nil? # If nil, we're probably inside a Jenkins build
-      Glue.warn '***** No Bitbucket variables found, is this a Jenkins build?'
-      git_env[:commit] = ENV['GIT_COMMIT']
-      Glue.warn git_env[:commit]
-      git_env[:branch] = ENV['GIT_BRANCH'].sub('origin/', '')
-      Glue.warn git_env[:branch]
-      if git_env[:branch].include? 'PR'
-        Glue.warn '***** This build comes from a Bitbucket Pull Request, the link will point to that.'
-        git_env[:url] = bitbucket_pr_linker(git_env.branch.chomp('PR-'), ENV['JOB_NAME'])
-      else
-        git_env[:url] = ENV['GIT_URL'].gsub('git@', '').gsub(':', '/').gsub('.git', '').insert(0, 'https://')
-      end
-    end
-    unless ENV['BITBUCKET_COMMIT'].nil?  # If nil, we're probably inside a Bitbucket pipeline
-      Glue.warn '***** No Jenkins variables found, is this a Bitbucket build?'
-      git_env[:commit] = ENV['BITBUCKET_COMMIT']
-      git_env[:branch] = ENV['BITBUCKET_BRANCH'].sub('origin/', '')
-      git_env[:url] = 'https://bitbucket.org/' + ENV['BITBUCKET_REPO_FULL_NAME']
-    end
-    git_env
-  end
-
   def slack_priority(severity)
-    if number?(severity)
-      f = Float(severity)
-      if f == 3
-        'good'
-      elsif f == 2
-        'warning'
-      elsif f == 1
-        'danger'
-      else
-        Glue.notify "**** Unknown severity type #{severity}"
-        severity
-      end
+    Float(severity) if number?(severity)
+    case severity
+    when 3 then 'good'
+    when 2 then 'warning'
+    when 1 then 'danger'
+    else
+      Glue.notify "**** Unknown severity type #{severity}"
+      severity
     end
+    Glue.notify '**** Severity is not a number, returning nothing'
+    ''
   end
 end
