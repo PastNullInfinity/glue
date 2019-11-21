@@ -56,11 +56,12 @@ module Glue::EnvHelper
       return git_env[:url] = bitbucket_pr_linker(git_env.branch.sub('PR-', ''), ENV['JOB_NAME'])
     else
       # Converts an SSH link to a HTTPS one
-      return git_env[:url] = ENV['GIT_URL']
-             .gsub('git@', '')
-             .gsub(':', '/')
-             .gsub('.git', '')
-             .insert(0, 'https://')
+      git_env[:url] = ENV['GIT_URL']
+                      .gsub('git@', '')
+                      .gsub(':', '/')
+                      .gsub('.git', '')
+                      .insert(0, 'https://')
+      return git_env
     end
   end
 
@@ -69,6 +70,7 @@ module Glue::EnvHelper
     git_env[:branch] = ENV['BITBUCKET_BRANCH'].sub('origin/', '')
     git_env[:url] = 'https://bitbucket.org/' + ENV['BITBUCKET_REPO_FULL_NAME']
     # Returns the env
+    puts git_env
     git_env
   end
 

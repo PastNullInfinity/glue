@@ -72,9 +72,9 @@ module Glue::Util
   def slack_priority(severity)
     Float(severity) if number?(severity)
     case severity
-    when 3 then 'good'
-    when 2 then 'warning'
-    when 1 then 'danger'
+    when 3 then return 'good'
+    when 2 then return 'warning'
+    when 1 then return 'danger'
     else
       Glue.notify "**** Unknown severity type #{severity}"
       severity
