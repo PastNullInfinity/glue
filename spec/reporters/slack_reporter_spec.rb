@@ -15,7 +15,7 @@ describe Glue::SlackReporter do
     @tracker.report Glue::Finding.new('finding_appname',
                                       'finding_description',
                                       'finding_detail',
-                                      'finding_test',
+                                      'test/finding_test.py',
                                       1,
                                       'fingerprint_1',
                                       'finding_task')
