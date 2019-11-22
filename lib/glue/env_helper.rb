@@ -57,7 +57,7 @@ module Glue::EnvHelper
     Glue.warn git_env[:branch]
     if git_env[:branch].include? 'PR'
       Glue.warn '***** This build comes from a Bitbucket Pull Request, the link will point to that.'
-      return git_env[:url] = bitbucket_pr_linker(git_env.branch.sub('PR-', ''), ENV['JOB_NAME'])
+      return git_env[:url] = bitbucket_pr_linker(git_env[:branch].sub('PR-', ''), ENV['JOB_NAME'])
     else
       # Converts an SSH link to a HTTPS one
       git_env[:url] = ENV['GIT_URL']

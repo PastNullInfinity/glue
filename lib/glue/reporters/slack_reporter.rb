@@ -80,11 +80,7 @@ class Glue::SlackReporter < Glue::BaseReporter
     end
 
     reports = []
-    if tracker.findings.length < 5
-      tracker.findings.each do |finding|
-        reports << get_slack_attachment_json(finding, tracker)
-      end
-    elsif tracker.findings.length.zero?
+    if tracker.findings.length.zero?
       Glue.notify '**** No issues found, skipping report generation...'
     else
       Glue.notify '**** Running base HTML report'
@@ -110,15 +106,6 @@ class Glue::SlackReporter < Glue::BaseReporter
       issue_number = tracker.findings.length
       if tracker.findings.length.zero?
         Glue.notify '**** No issues found, skipping send report.'
-      elsif tracker.findings.length < 5
-        client.chat_postMessage(
-          channel: tracker.options[:slack_channel],
-          text: 'OWASP Glue has found ' + issue_number.to_s + \
-                ' vulnerabilities in *' + tracker.options[:appname] + '* :' + @git_env[:commit] + ".\n" \
-                "Here's a summary: \n Link to repo: #{@git_env[:url]}/commits/#{@git_env[:commit]}",
-          attachments: reports,
-          as_user: post_as_user
-        )
       else
         Glue.notify '**** Uploading message and attachment to Slack'
         client.chat_postMessage(
