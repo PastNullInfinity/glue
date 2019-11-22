@@ -51,6 +51,18 @@ describe '#env_helper' do
         url: 'https://bitbucket.org/testfolder/testrepo'
       )
     end
+    it 'Should generate a PR link if the Jenkins environment says so' do
+      allow(ENV).to receive(:[]).with('GIT_COMMIT').and_return('testJenkinsCommit')
+      allow(ENV).to receive(:[]).with('GIT_BRANCH').and_return('origin/PR-2')
+      allow(ENV).to receive(:[]).with('GIT_URL').and_return('git@bitbucket.org:testfolder/testrepo.git')
+      allow(ENV).to receive(:[]).with('JOB_NAME').and_return('job_folder/PR-2/master')
+      git_env = {}
+      expect(@env_class.jenkins_environment(git_env)).to include(
+        branch: 'master',
+        commit: 'testJenkinsCommit',
+        url: 'https://bitbucket.org/testfolder/testrepo/pull-request/2'
+      )
+    end
   end
 
   context '.get_git_environment' do
