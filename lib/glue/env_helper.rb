@@ -1,5 +1,5 @@
 require 'glue/util'
-
+require 'open3'
 # Helper functions to make sense of the mess that is handling
 # different pipeline environments.
 module Glue::EnvHelper
@@ -24,11 +24,15 @@ module Glue::EnvHelper
   end
 
   def read_git_branch
-    system("git log -n 1 --pretty=%d HEAD | awk '{print $2}' | cut -d ')' -f 1")
+    Open3.popen3("git log -n 1 --pretty=%d HEAD | awk '{print $2}' | cut -d ')' -f 1") do |stdout, stderr, wait_thr|
+      return stdout.read
+    end
   end
 
   def read_git_repo_name
-    system("git config --get remote.origin.url | cut -d '/' -f 2 | cut -d '.' -f 1")
+    Open3.popen3("git config --get remote.origin.url | cut -d ':' -f 2 | cut -d '.' -f 1 | cut -d '/' -f 2") do |stdout, stderr, wait_thr|
+      return stdout.read
+    end
   end
 
   def bitbucket_pr_linker(pr_number, job_name)
