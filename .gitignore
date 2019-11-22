@@ -3,7 +3,6 @@
 vendor/**
 coverage
 rspec_results.html
-spec/output/log.txt
 glue_fork
 report_test_app.html
 report_test_app.pdf

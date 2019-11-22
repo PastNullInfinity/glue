@@ -40,14 +40,13 @@ module Glue::EnvHelper
     # https://bitbucket.org/<project_name>/<repo_name>/pull-requests/<pr_number>
     # AFAIK, the rest of the URL gets populated by Bitbucket, there's no need to mess with
     # git refs and the like.
-    branch = read_git_branch
     project = job_name.split('-')[0]
 
     # We no longer have the luxury of getting the current repository name, so we get it
     # from the current remote.
     repo = read_git_repo_name
 
-    "https://bitbucket.org/#{project}/#{repo}/pull-requests/#{pr_number}/#{branch}"
+    "https://bitbucket.org/#{project}/#{repo}/pull-requests/#{pr_number}"
   end
 
   def jenkins_environment(git_env)
