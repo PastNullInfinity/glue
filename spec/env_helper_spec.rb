@@ -18,7 +18,7 @@ describe '#env_helper' do
       allow(ENV).to receive(:[]).with('JOB_NAME').and_return('projectName-build-bitbucket/repoName/PR-10')
       allow(@env_class).to receive(:read_git_branch).and_return('feature-TestFeature')
       allow(@env_class).to receive(:read_git_repo_name).and_return('repoName')
-      expect(@env_class.bitbucket_pr_linker('10', ENV['JOB_NAME'])).to eq('https://bitbucket.org/projectName/repoName/pull-requests/10/feature-TestFeature')
+      expect(@env_class.bitbucket_pr_linker('10', ENV['JOB_NAME'])).to eq('https://bitbucket.org/projectName/repoName/pull-requests/10')
     end
   end
 

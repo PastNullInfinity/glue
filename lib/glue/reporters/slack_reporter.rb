@@ -95,7 +95,8 @@ class Glue::SlackReporter < Glue::BaseReporter
 
       # runs command to render to PDF
       Glue.notify '**** Rendering PDF'
-      `wkhtmltopdf --encoding utf-8 #{report_filename}.html #{report_filename}.pdf`
+      command = "wkhtmltopdf --encoding utf-8 #{report_filename}.html #{report_filename}.pdf"
+      runsystem(true, command)
     end
 
     puts tracker.options[:slack_channel]
